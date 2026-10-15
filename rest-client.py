@@ -10,13 +10,16 @@ import jsonpickle
 import random
 import argparse
 
+IMAGE_FILE = 'Flatirons_Winter_Sunrise_edit_2.jpg'
+VECTOR_LENGTH = 100
+
 
 def doRawImage(addr, debug=False):
 
     # prepare headers for http request
     headers = {'content-type': 'image/png'}
 
-    img = open('Flatirons_Winter_Sunrise_edit_2.jpg', 'rb').read()
+    img = open(IMAGE_FILE, 'rb').read()
 
     # send http request with image and receive response
     image_url = addr + '/api/rawimage'
@@ -41,11 +44,46 @@ def doAdd(addr, debug=False):
 
 
 def doDotProduct(addr, debug=False):
-    pass
+
+    headers = {'content-type': 'application/json'}
+
+    # Two vectors of VECTOR_LENGTH random numbers in [0,1)
+    a = [random.random() for _ in range(VECTOR_LENGTH)]
+    b = [random.random() for _ in range(VECTOR_LENGTH)]
+
+    payload = {'a': a, 'b': b}
+
+    dotproduct_url = addr + '/api/dotproduct'
+    response = requests.post(dotproduct_url,
+                             data=json.dumps(payload),
+                             headers=headers)
+
+    if debug:
+        print("Response is", response)
+        print(json.loads(response.text))
+        # Sanity check against a locally computed dot product
+        print("Locally computed:", sum(x * y for x, y in zip(a, b)))
 
 
 def doJsonImage(addr, debug=False):
-    pass
+
+    headers = {'content-type': 'application/json'}
+
+    img = open(IMAGE_FILE, 'rb').read()
+
+    # base64 turns the binary image into a string that can live in JSON
+    encoded = base64.b64encode(img).decode('utf-8')
+
+    payload = {'image': encoded}
+
+    image_url = addr + '/api/jsonimage'
+    response = requests.post(image_url,
+                             data=json.dumps(payload),
+                             headers=headers)
+
+    if debug:
+        print("Response is", response)
+        print(json.loads(response.text))
 
 
 # ---------------------------------------------------------
@@ -144,4 +182,3 @@ elif args.cmd == 'dotProduct':
 
     delta = ((time.perf_counter() - start) / args.reps) * 1000
     print("Took", delta, "ms per operation")
-
